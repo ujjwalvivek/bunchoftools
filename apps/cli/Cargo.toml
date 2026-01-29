@@ -1,0 +1,21 @@
+[package]
+name = "bunch-cli"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "bunch-cli"
+path = "src/main.rs"
+
+[dependencies]
+bunch-core.workspace = true
+bunch-native.workspace = true
+bunch-planner.workspace = true
+bunch-protocol.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
