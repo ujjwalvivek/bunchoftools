@@ -1,0 +1,16 @@
+pub(crate) const BACKGROUND: u32 = 0x111315;
+pub(crate) const SURFACE: u32 = 0x171a1d;
+pub(crate) const RAISED: u32 = 0x1d2125;
+pub(crate) const HOVER: u32 = 0x252b30;
+pub(crate) const BORDER: u32 = 0x30363c;
+pub(crate) const BORDER_STRONG: u32 = 0x46515b;
+pub(crate) const TEXT: u32 = 0xe9edf0;
+pub(crate) const MUTED: u32 = 0x98a2aa;
+pub(crate) const DIM: u32 = 0x626c74;
+pub(crate) const ACCENT: u32 = 0x44b8c7;
+pub(crate) const ACCENT_DARK: u32 = 0x17383d;
+pub(crate) const SUCCESS: u32 = 0x6bc48d;
+pub(crate) const WARNING: u32 = 0xe0ad58;
+pub(crate) const ERROR: u32 = 0xdc6672;
+pub(crate) const UI_FONT: &str = "Segoe UI";
+pub(crate) const MONO_FONT: &str = "Cascadia Mono";
