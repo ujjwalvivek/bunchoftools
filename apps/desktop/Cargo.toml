@@ -1,0 +1,27 @@
+[package]
+name = "bunch-desktop"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "bunch"
+path = "src/main.rs"
+
+[dependencies]
+bunch-core.workspace = true
+bunch-native.workspace = true
+bunch-planner.workspace = true
+bunch-protocol.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true
+gpui-component-assets.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+rfd.workspace = true
+
+[lints]
+workspace = true
