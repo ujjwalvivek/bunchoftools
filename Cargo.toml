@@ -20,9 +20,11 @@ async-channel = "=2.5.0"
 gpui = "=0.2.2"
 gpui-component = "=0.5.1"
 gpui-component-assets = "=0.5.1"
+image = { version = "=0.25.10", default-features = false, features = ["png"] }
 rfd = "=0.15.3"
 serde = { version = "=1.0.228", features = ["derive"] }
 serde_json = "=1.0.149"
+smallvec = "=1.15.1"
 
 bunch-core = { path = "crates/bunch-core" }
 bunch-native = { path = "crates/bunch-native" }
@@ -38,4 +40,3 @@ all = { level = "deny", priority = -1 }
 [profile.release]
 opt-level = 3
 lto = "thin"
-
