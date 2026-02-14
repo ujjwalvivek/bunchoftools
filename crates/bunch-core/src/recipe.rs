@@ -5,7 +5,10 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{Operation, SimulateParameters};
+use crate::{
+    EncodingMode, ImageAdjustments, ImageFormat, ImageResizeParameters, MAX_IMAGE_DIMENSION,
+    MAX_IMAGE_PIXELS, MetadataPolicy, Operation, ResizeMode, SimulateParameters,
+};
 
 pub const RECIPE_SCHEMA_VERSION: u32 = 1;
 
@@ -127,6 +130,55 @@ impl Recipe {
     }
 
     #[must_use]
+    pub fn image_resize() -> Self {
+        Self {
+            schema_version: RECIPE_SCHEMA_VERSION,
+            name: "README image".to_owned(),
+            inputs: vec![InputSlot {
+                id: "source".to_owned(),
+                accepts: vec![
+                    "image/png".to_owned(),
+                    "image/jpeg".to_owned(),
+                    "image/webp".to_owned(),
+                    "image/avif".to_owned(),
+                    "image/bmp".to_owned(),
+                    "image/x-icon".to_owned(),
+                    "image/jp2".to_owned(),
+                    "image/jxl".to_owned(),
+                    "image/qoi".to_owned(),
+                    "image/x-tga".to_owned(),
+                    "image/tiff".to_owned(),
+                ],
+            }],
+            steps: vec![RecipeStep {
+                id: "resize".to_owned(),
+                inputs: vec![StepSource::Input("source".to_owned())],
+                operation: Operation::ImageResize(ImageResizeParameters {
+                    width: 1_280,
+                    height: 720,
+                    mode: ResizeMode::Fit,
+                    allow_upscale: true,
+                    pad_to_size: false,
+                    crop: None,
+                    rotation_degrees: 0,
+                    flip_horizontal: false,
+                    flip_vertical: false,
+                    adjustments: ImageAdjustments::default(),
+                    background_rgb: 0x000000,
+                    format: ImageFormat::Webp,
+                    quality: 82,
+                    encoding: EncodingMode::Automatic,
+                    metadata: MetadataPolicy::Strip,
+                }),
+            }],
+            output: OutputPolicy {
+                name_template: "{stem}.optimized.webp".to_owned(),
+                collision: CollisionPolicy::Increment,
+            },
+        }
+    }
+
+    #[must_use]
     pub fn validate(&self) -> Vec<ValidationIssue> {
         let mut issues = Vec::new();
         if self.schema_version != RECIPE_SCHEMA_VERSION {
@@ -238,6 +290,21 @@ impl Recipe {
                 "output name must contain {stem}, contain no path separator, and fit within 240 characters",
             );
         }
+        if let Some(Operation::ImageResize(parameters)) =
+            self.steps.last().map(|step| &step.operation)
+        {
+            let expected_suffix = format!(".{}", parameters.format.extension());
+            if !output.to_ascii_lowercase().ends_with(&expected_suffix) {
+                push_issue(
+                    &mut issues,
+                    ValidationCode::InvalidOutput,
+                    "output.name_template",
+                    format!(
+                        "image output name must end in {expected_suffix} for the selected format"
+                    ),
+                );
+            }
+        }
 
         issues
     }
@@ -324,6 +391,90 @@ fn validate_operation(operation: &Operation, index: usize, issues: &mut Vec<Vali
                 );
             }
         }
+        Operation::ImageResize(parameters) => {
+            let pixel_count = u64::from(parameters.width) * u64::from(parameters.height);
+            if parameters.width == 0
+                || parameters.height == 0
+                || parameters.width > MAX_IMAGE_DIMENSION
+                || parameters.height > MAX_IMAGE_DIMENSION
+                || pixel_count > MAX_IMAGE_PIXELS
+            {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.dimensions"),
+                    format!(
+                        "image dimensions must be non-zero, at most {MAX_IMAGE_DIMENSION} per side, and at most {MAX_IMAGE_PIXELS} pixels"
+                    ),
+                );
+            }
+            if !(1..=100).contains(&parameters.quality) {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.quality"),
+                    "image quality must be between 1 and 100",
+                );
+            }
+            if parameters.background_rgb > 0xffffff {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.background_rgb"),
+                    "image background must be a 24-bit RGB color",
+                );
+            }
+            if !(-180..=180).contains(&parameters.rotation_degrees) {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.rotation_degrees"),
+                    "rotation must be between -180 and 180 degrees",
+                );
+            }
+            let adjustments = parameters.adjustments;
+            if !(-100..=100).contains(&adjustments.brightness)
+                || !(-100..=100).contains(&adjustments.contrast)
+                || !(-100..=100).contains(&adjustments.saturation)
+                || !(-180..=180).contains(&adjustments.hue)
+                || adjustments.blur_tenths > 200
+                || adjustments.sharpen_tenths > 200
+            {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.adjustments"),
+                    "brightness, contrast, and saturation must be -100..100; hue -180..180; blur and sharpen 0..20",
+                );
+            }
+            if let Some(crop) = parameters.crop
+                && (crop.width == 0
+                    || crop.height == 0
+                    || crop.width > MAX_IMAGE_DIMENSION
+                    || crop.height > MAX_IMAGE_DIMENSION
+                    || u64::from(crop.width) * u64::from(crop.height) > MAX_IMAGE_PIXELS)
+            {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.crop"),
+                    "crop dimensions must be non-zero and remain inside image resource limits",
+                );
+            }
+            if parameters.encoding == EncodingMode::Lossless
+                && !parameters.format.supports_lossless_choice()
+            {
+                push_issue(
+                    issues,
+                    ValidationCode::InvalidParameter,
+                    format!("steps[{index}].operation.parameters.encoding"),
+                    format!(
+                        "{} does not expose a selectable lossless mode",
+                        parameters.format.label()
+                    ),
+                );
+            }
+        }
     }
 }
 
@@ -389,6 +540,24 @@ mod tests {
                 .validate()
                 .iter()
                 .any(|issue| issue.code == ValidationCode::InvalidOutput)
+        );
+    }
+
+    #[test]
+    fn image_recipe_round_trips_and_rejects_hostile_dimensions() {
+        let mut recipe = Recipe::image_resize();
+        let json = recipe.to_pretty_json().expect("valid image recipe");
+        assert_eq!(parse_recipe_json(&json).expect("recipe parses"), recipe);
+
+        let Operation::ImageResize(parameters) = &mut recipe.steps[0].operation else {
+            panic!("image recipe operation");
+        };
+        parameters.width = MAX_IMAGE_DIMENSION + 1;
+        assert!(
+            recipe
+                .validate()
+                .iter()
+                .any(|issue| issue.code == ValidationCode::InvalidParameter)
         );
     }
 }
