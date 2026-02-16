@@ -71,7 +71,7 @@ pub enum JobEventKind {
         message: String,
     },
     ArtifactProduced {
-        artifact: ArtifactManifest,
+        artifact: Box<ArtifactManifest>,
     },
     Diagnostic {
         level: DiagnosticLevel,
@@ -172,7 +172,7 @@ impl JobSnapshot {
                 self.progress_message.clone_from(message);
             }
             JobEventKind::ArtifactProduced { artifact } => {
-                self.artifacts.push(artifact.clone());
+                self.artifacts.push(artifact.as_ref().clone());
             }
             JobEventKind::Diagnostic { message, .. } => {
                 self.diagnostics.push(message.clone());
