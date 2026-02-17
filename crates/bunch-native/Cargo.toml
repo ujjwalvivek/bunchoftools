@@ -12,6 +12,8 @@ bunch-planner.workspace = true
 bunch-protocol.workspace = true
 serde.workspace = true
 
+[dev-dependencies]
+image = { version = "=0.25.10", default-features = false, features = ["gif", "jpeg", "png"] }
+
 [lints]
 workspace = true
-
