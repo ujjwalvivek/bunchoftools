@@ -2,6 +2,8 @@ use bunch_core::{
     AdapterIdentity, CapabilityDescriptor, CapabilitySet, ExecutorKind, OperationKind,
 };
 
+use crate::adapters::imagemagick::ImageMagick;
+
 pub const FOUNDATION_ADAPTER_ID: &str = "foundation.fake";
 
 #[must_use]
@@ -18,4 +20,13 @@ pub fn foundation_capabilities() -> CapabilitySet {
         supports_progress: true,
         supports_cancellation: true,
     }])
+}
+
+#[must_use]
+pub fn native_capabilities() -> CapabilitySet {
+    let mut capabilities = foundation_capabilities().all().to_vec();
+    if let Ok(engine) = ImageMagick::discover() {
+        capabilities.push(engine.capability());
+    }
+    CapabilitySet::new(capabilities)
 }
