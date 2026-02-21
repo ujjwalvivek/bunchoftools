@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policymap [
+  <!ELEMENT policymap (policy)+>
+  <!ELEMENT policy EMPTY>
+  <!ATTLIST policy domain CDATA #REQUIRED>
+  <!ATTLIST policy name CDATA #IMPLIED>
+  <!ATTLIST policy rights CDATA #IMPLIED>
+  <!ATTLIST policy pattern CDATA #IMPLIED>
+  <!ATTLIST policy value CDATA #IMPLIED>
+]>
+<policymap>
+  <policy domain="system" name="bunch-policy-version" value="2" />
+  <policy domain="resource" name="memory" value="256MiB" />
+  <policy domain="resource" name="map" value="512MiB" />
+  <policy domain="resource" name="disk" value="1GiB" />
+  <policy domain="resource" name="area" value="40MP" />
+  <policy domain="resource" name="width" value="8192" />
+  <policy domain="resource" name="height" value="8192" />
+  <policy domain="resource" name="list-length" value="32" />
+  <policy domain="resource" name="thread" value="4" />
+  <policy domain="resource" name="time" value="120" />
+  <policy domain="delegate" rights="none" pattern="*" />
+  <policy domain="filter" rights="none" pattern="*" />
+  <policy domain="path" rights="none" pattern="@*" />
+  <policy domain="module" rights="none" pattern="*" />
+  <policy domain="module" rights="read | write" pattern="{BMP,GIF,HEIC,ICON,JP2,JPEG,JPG,JXL,PNG,PSD,QOI,TGA,TIFF,WEBP}" />
+  <policy domain="coder" rights="none" pattern="*" />
+  <policy domain="coder" rights="read" pattern="{GIF,HEIC,HEIF,PSD}" />
+  <policy domain="coder" rights="read | write" pattern="{AVIF,BMP,ICO,ICON,J2K,JP2,JPEG,JPG,JXL,PNG,QOI,TGA,TIFF,WEBP}" />
+</policymap>
