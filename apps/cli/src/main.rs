@@ -3,7 +3,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use bunch_core::{AssetBinding, ExecutionBindings, ExecutorKind, Recipe};
-use bunch_native::{NativeRunner, foundation_capabilities, load_recipe};
+use bunch_native::{NativeRunner, load_recipe, native_capabilities, probe_image};
 use bunch_planner::{ExecutionPlan, Planner};
 
 fn main() {
@@ -20,8 +20,17 @@ fn run() -> Result<(), String> {
         return Ok(());
     };
     match command {
-        "sample" => print_json(&Recipe::foundation_demo()),
-        "capabilities" => print_json(foundation_capabilities().all()),
+        "sample" => print_json(&Recipe::image_resize()),
+        "foundation-sample" => print_json(&Recipe::foundation_demo()),
+        "capabilities" => print_json(native_capabilities().all()),
+        "probe" => {
+            let path = required_path(&arguments, 1, "probe requires INPUT")?;
+            print_json(&probe_image(&path)?)
+        }
+        "image" => {
+            let path = required_path(&arguments, 1, "image requires INPUT")?;
+            run_plan(plan_for_path(&Recipe::image_resize(), &path)?)
+        }
         "validate" => {
             let path = required_path(&arguments, 1, "validate requires RECIPE.json")?;
             let recipe = load_recipe(&path)?;
@@ -86,7 +95,7 @@ fn plan_for_path(recipe: &Recipe, input_path: &Path) -> Result<ExecutionPlan, St
         .plan(
             recipe,
             bindings,
-            &foundation_capabilities(),
+            &native_capabilities(),
             ExecutorKind::Native,
         )
         .map_err(|error| error.to_string())
@@ -130,9 +139,12 @@ fn print_json(value: &(impl serde::Serialize + ?Sized)) -> Result<(), String> {
 
 fn print_help() {
     println!(
-        "Bunch of Tools M1\n\n\
+        "Bunch of Tools M2\n\n\
          bunch-cli sample\n\
+         bunch-cli foundation-sample\n\
          bunch-cli capabilities\n\
+         bunch-cli probe INPUT\n\
+         bunch-cli image INPUT\n\
          bunch-cli validate RECIPE.json\n\
          bunch-cli plan RECIPE.json INPUT\n\
          bunch-cli run RECIPE.json INPUT\n\
