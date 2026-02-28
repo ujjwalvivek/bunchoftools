@@ -17,8 +17,10 @@ bunch-protocol.workspace = true
 gpui.workspace = true
 gpui-component.workspace = true
 gpui-component-assets.workspace = true
+image.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+smallvec.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 rfd.workspace = true
